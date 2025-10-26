@@ -35,7 +35,7 @@ const Canvas: React.FC = () => {
   useEffect(() => {
     const fetchStrokes = async () => {
       const { data } = await supabase
-        .from<SupabaseStroke>("strokes")
+        .from("strokes")
         .select("*")
         .order("created_at", { ascending: true })
 
@@ -129,9 +129,26 @@ const Canvas: React.FC = () => {
   //   return () => clearInterval(interval)
   // }, [])
 
-  // Mouse events
-  const handleMouseDown = (e: any) => {
-    const pos = e.target.getStage().getPointerPosition()
+  // Helper function to get pointer position (works for both mouse and touch)
+  const getPointerPosition = (e: any) => {
+    const stage = e.target.getStage()
+    if (e.evt && e.evt.touches && e.evt.touches.length > 0) {
+      // Touch event
+      const touch = e.evt.touches[0]
+      const rect = stage.container().getBoundingClientRect()
+      return {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top,
+      }
+    }
+    // Mouse event
+    return stage.getPointerPosition()
+  }
+
+  // Drawing events (works for both mouse and touch)
+  const handlePointerDown = (e: any) => {
+    e.evt.preventDefault() // Prevent default touch behaviors
+    const pos = getPointerPosition(e)
     if (!pos) return
 
     const newLine: Stroke = {
@@ -146,17 +163,18 @@ const Canvas: React.FC = () => {
     setIsDrawing(true)
   }
 
-  const handleMouseMove = (e: any) => {
+  const handlePointerMove = (e: any) => {
     if (!isDrawing || !lastLineRef.current) return
-    const stage = e.target.getStage()
-    const point = stage.getPointerPosition()
+    e.evt.preventDefault() // Prevent scrolling while drawing
+    const point = getPointerPosition(e)
     if (!point) return
 
     lastLineRef.current.points = lastLineRef.current.points.concat([point.x, point.y])
     setLines(prev => [...prev.slice(0, -1), lastLineRef.current!])
   }
 
-  const handleMouseUp = async () => {
+  const handlePointerUp = async (e: any) => {
+    e.evt.preventDefault()
     setIsDrawing(false)
     if (!lastLineRef.current) return
 
@@ -212,10 +230,14 @@ const Canvas: React.FC = () => {
       <Stage
         width={window.innerWidth}
         height={window.innerHeight}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
+        onMouseDown={handlePointerDown}
+        onMouseMove={handlePointerMove}
+        onMouseUp={handlePointerUp}
+        onTouchStart={handlePointerDown}
+        onTouchMove={handlePointerMove}
+        onTouchEnd={handlePointerUp}
         ref={stageRef}
+        style={{ touchAction: "none" }}
       >
         <Layer>
           {lines.map(line => (

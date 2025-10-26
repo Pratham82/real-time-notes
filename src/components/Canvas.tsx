@@ -101,33 +101,33 @@ const Canvas: React.FC = () => {
   }, [isDrawing])
 
   // 4️⃣ Poll
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      const { data } = await supabase
-        .from<SupabaseStroke>("strokes")
-        .select("*")
-        .order("created_at", { ascending: true })
+  // useEffect(() => {
+  //   const interval = setInterval(async () => {
+  //     const { data } = await supabase
+  //       .from<SupabaseStroke>("strokes")
+  //       .select("*")
+  //       .order("created_at", { ascending: true })
 
-      if (data) {
-        const formatted = data.map(s => ({
-          id: s.id,
-          color: s.color,
-          thickness: s.thickness,
-          points: s.points.flatMap(p => [p.x, p.y]),
-        }))
+  //     if (data) {
+  //       const formatted = data.map(s => ({
+  //         id: s.id,
+  //         color: s.color,
+  //         thickness: s.thickness,
+  //         points: s.points.flatMap(p => [p.x, p.y]),
+  //       }))
 
-        setLines(prev => {
-          // Only update if new strokes are available
-          const prevIds = new Set(prev.map(l => l.id))
-          const newStrokes = formatted.filter(f => !prevIds.has(f.id))
-          if (newStrokes.length === 0) return prev
-          return [...prev, ...newStrokes]
-        })
-      }
-    }, 1000) // fetch every 1 second
+  //       setLines(prev => {
+  //         // Only update if new strokes are available
+  //         const prevIds = new Set(prev.map(l => l.id))
+  //         const newStrokes = formatted.filter(f => !prevIds.has(f.id))
+  //         if (newStrokes.length === 0) return prev
+  //         return [...prev, ...newStrokes]
+  //       })
+  //     }
+  //   }, 1000) // fetch every 1 second
 
-    return () => clearInterval(interval)
-  }, [])
+  //   return () => clearInterval(interval)
+  // }, [])
 
   // Mouse events
   const handleMouseDown = (e: any) => {
